@@ -6,7 +6,6 @@ import LoginForm from './components/LoginForm'
 
 export default function App() {
   const [session, setSession] = useState(undefined) // undefined = caricamento, null = non loggato
-  const [authorName, setAuthorName] = useState('')
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -46,11 +45,13 @@ export default function App() {
     fetchMessages()
   }, [fetchMessages])
 
+  const currentUser = session?.user
+
   const handleAdd = async (text) => {
     setBusy(true)
     const { data, error } = await supabase
       .from('messages')
-      .insert({ text, author: authorName.trim() })
+      .insert({ text, author: currentUser.email, user_id: currentUser.id })
       .select()
       .single()
     if (error) {
@@ -117,8 +118,6 @@ export default function App() {
         <MessageInput
           onAdd={handleAdd}
           disabled={busy}
-          authorName={authorName}
-          onAuthorChange={setAuthorName}
         />
 
         <MessageList
@@ -132,7 +131,7 @@ export default function App() {
           onCancel={handleCancel}
           onDelete={handleDelete}
           busy={busy}
-          currentAuthor={authorName.trim()}
+          currentAuthor={currentUser.id}
         />
       </div>
 

@@ -37,7 +37,7 @@ export default function MessageCard({ message, isEditing, onEdit, onSave, onCanc
   const [confirmDelete, setConfirmDelete] = useState(false)
   const editRef = useRef(null)
 
-  const isOwner = message.author === currentAuthor
+  const isOwner = message.user_id === currentAuthor
 
   useEffect(() => {
     if (isEditing) {
