@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { parseMentions } from '../utils/mentions'
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString('it-IT', {
@@ -11,6 +12,7 @@ function formatDate(dateStr) {
 }
 
 function getAvatarColor(name) {
+  if (!name) return 'bg-gray-400'
   let hash = 0
   for (const c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash)
   const colors = [
@@ -18,6 +20,18 @@ function getAvatarColor(name) {
     'bg-amber-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500',
   ]
   return colors[Math.abs(hash) % colors.length]
+}
+
+function renderWithMentions(text) {
+  return parseMentions(text).map((token, i) =>
+    token.type === 'mention' ? (
+      <span key={i} className="bg-blue-100 text-blue-700 px-1 rounded font-medium">
+        @{token.value}
+      </span>
+    ) : (
+      <span key={i}>{token.value}</span>
+    )
+  )
 }
 
 const PencilIcon = () => (
@@ -32,12 +46,13 @@ const TrashIcon = () => (
   </svg>
 )
 
-export default function MessageCard({ message, isEditing, onEdit, onSave, onCancel, onDelete, busy, currentAuthor }) {
+export default function MessageCard({ message, isEditing, onEdit, onSave, onCancel, onDelete, busy, currentUserId, highlighted }) {
   const [editText, setEditText] = useState(message.text)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const editRef = useRef(null)
 
-  const isOwner = message.user_id === currentAuthor
+  const username = message.profiles?.username ?? '?'
+  const isOwner = message.user_id === currentUserId
 
   useEffect(() => {
     if (isEditing) {
@@ -70,18 +85,10 @@ export default function MessageCard({ message, isEditing, onEdit, onSave, onCanc
           className="w-full px-3 py-2 rounded-lg border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-3 disabled:opacity-50"
         />
         <div className="flex gap-2 justify-end">
-          <button
-            onClick={onCancel}
-            disabled={busy}
-            className="px-3 py-1 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
+          <button onClick={onCancel} disabled={busy} className="px-3 py-1 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors">
             Annulla
           </button>
-          <button
-            onClick={handleSave}
-            disabled={!editText.trim() || busy}
-            className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
+          <button onClick={handleSave} disabled={!editText.trim() || busy} className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             Salva
           </button>
         </div>
@@ -90,56 +97,31 @@ export default function MessageCard({ message, isEditing, onEdit, onSave, onCanc
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 animate-fade-in">
+    <div className={`bg-white rounded-xl shadow-sm p-4 animate-fade-in ${highlighted ? 'animate-highlight' : ''}`}>
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${getAvatarColor(message.author)}`}>
-          {message.author.charAt(0).toUpperCase()}
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${getAvatarColor(username)}`}>
+          {username.charAt(0).toUpperCase()}
         </div>
 
-        {/* Contenuto */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-800 text-sm">{message.author}</p>
-          <p className="text-gray-700 break-words">{message.text}</p>
+          <p className="font-bold text-gray-800 text-sm">{username}</p>
+          <p className="text-gray-700 break-words">{renderWithMentions(message.text)}</p>
           <p className="text-xs text-gray-400 mt-1">{formatDate(message.created_at)}</p>
         </div>
 
-        {/* Azioni (solo per il proprietario) */}
         {isOwner && (
           confirmDelete ? (
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm text-gray-600">Sei sicuro?</span>
-              <button
-                onClick={() => onDelete(message.id)}
-                disabled={busy}
-                className="px-2 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-              >
-                Sì
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                disabled={busy}
-                className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              >
-                No
-              </button>
+              <button onClick={() => onDelete(message.id)} disabled={busy} className="px-2 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors">Sì</button>
+              <button onClick={() => setConfirmDelete(false)} disabled={busy} className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors">No</button>
             </div>
           ) : (
             <div className="flex gap-1 shrink-0">
-              <button
-                onClick={() => onEdit(message.id)}
-                disabled={busy}
-                className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg disabled:opacity-40 transition-colors"
-                title="Modifica"
-              >
+              <button onClick={() => onEdit(message.id)} disabled={busy} className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg disabled:opacity-40 transition-colors" title="Modifica">
                 <PencilIcon />
               </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                disabled={busy}
-                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40 transition-colors"
-                title="Elimina"
-              >
+              <button onClick={() => setConfirmDelete(true)} disabled={busy} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40 transition-colors" title="Elimina">
                 <TrashIcon />
               </button>
             </div>
