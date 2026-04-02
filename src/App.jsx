@@ -2,14 +2,24 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import MessageInput from './components/MessageInput'
 import MessageList from './components/MessageList'
+import LoginForm from './components/LoginForm'
 
 export default function App() {
+  const [session, setSession] = useState(undefined) // undefined = caricamento, null = non loggato
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setSession(session ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   const showToast = (msg) => {
     setToast(msg)
@@ -86,10 +96,22 @@ export default function App() {
     setBusy(false)
   }
 
+  if (session === undefined) return null // attesa check sessione
+
+  if (!session) return <LoginForm />
+
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-8">
       <div className="max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Messaggi</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Messaggi</h1>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="text-sm text-gray-500 hover:text-red-500 transition-colors"
+          >
+            Esci
+          </button>
+        </div>
 
         <MessageInput onAdd={handleAdd} disabled={busy} />
 
