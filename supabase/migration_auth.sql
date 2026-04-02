@@ -11,11 +11,16 @@ ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO profiles (id, username)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'username');
+  INSERT INTO public.profiles (id, username)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || substr(NEW.id::text, 1, 8))
+  );
   RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RETURN NEW; -- non bloccare mai la creazione utente
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
