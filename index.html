@@ -1,92 +1,12 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <title>Hello World</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 400px; margin: 60px auto; padding: 0 20px; }
-    h1 { color: red; }
-    input { display: block; width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
-    button { padding: 8px 16px; margin: 4px 4px 4px 0; cursor: pointer; }
-    #message { margin-top: 12px; color: green; }
-    #error { margin-top: 12px; color: red; }
-  </style>
-</head>
-<body>
-  <h1>Hello World</h1>
-
-  <div id="auth-section">
-    <h2>Accedi</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="signUp()">Registrati</button>
-    <button onclick="signIn()">Accedi</button>
-    <div id="error"></div>
-  </div>
-
-  <div id="user-section" style="display:none;">
-    <p id="user-info"></p>
-    <button onclick="signOut()">Logout</button>
-  </div>
-
-  <div id="message"></div>
-
-  <script>
-    const SUPABASE_URL = 'https://lzptnzmszdrduawrxecd.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6cHRuem1zemRyZHVhd3J4ZWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDA2NTIsImV4cCI6MjA5MDcxNjY1Mn0.ACqLea4YjjnZXt_VLeFDcQwugMYINUAvpz74SuliAS8';
-
-    const { createClient } = supabase;
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    function showError(msg) {
-      document.getElementById('error').textContent = msg;
-    }
-
-    function showMessage(msg) {
-      document.getElementById('message').textContent = msg;
-    }
-
-    function updateUI(user) {
-      if (user) {
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('user-section').style.display = 'block';
-        document.getElementById('user-info').textContent = 'Connesso come: ' + user.email;
-        showMessage('Connesso a Supabase!');
-      } else {
-        document.getElementById('auth-section').style.display = 'block';
-        document.getElementById('user-section').style.display = 'none';
-        showMessage('');
-      }
-    }
-
-    async function signUp() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await client.auth.signUp({ email, password });
-      if (error) showError(error.message);
-      else showMessage('Registrazione avvenuta! Controlla la tua email per confermare.');
-    }
-
-    async function signIn() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) showError(error.message);
-    }
-
-    async function signOut() {
-      await client.auth.signOut();
-    }
-
-    client.auth.onAuthStateChange((_event, session) => {
-      updateUI(session?.user ?? null);
-    });
-
-    // Controlla sessione esistente al caricamento
-    client.auth.getSession().then(({ data: { session } }) => {
-      updateUI(session?.user ?? null);
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messaggi</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
