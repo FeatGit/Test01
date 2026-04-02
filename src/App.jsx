@@ -6,6 +6,7 @@ import LoginForm from './components/LoginForm'
 
 export default function App() {
   const [session, setSession] = useState(undefined) // undefined = caricamento, null = non loggato
+  const [authorName, setAuthorName] = useState('')
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -49,7 +50,7 @@ export default function App() {
     setBusy(true)
     const { data, error } = await supabase
       .from('messages')
-      .insert({ text })
+      .insert({ text, author: authorName.trim() })
       .select()
       .single()
     if (error) {
@@ -113,7 +114,12 @@ export default function App() {
           </button>
         </div>
 
-        <MessageInput onAdd={handleAdd} disabled={busy} />
+        <MessageInput
+          onAdd={handleAdd}
+          disabled={busy}
+          authorName={authorName}
+          onAuthorChange={setAuthorName}
+        />
 
         <MessageList
           messages={messages}
@@ -126,6 +132,7 @@ export default function App() {
           onCancel={handleCancel}
           onDelete={handleDelete}
           busy={busy}
+          currentAuthor={authorName.trim()}
         />
       </div>
 

@@ -20,6 +20,7 @@ export default function MessageList({
   onCancel,
   onDelete,
   busy,
+  currentAuthor,
 }) {
   if (loading) {
     return (
@@ -65,6 +66,7 @@ export default function MessageList({
           onCancel={onCancel}
           onDelete={onDelete}
           busy={busy}
+          currentAuthor={currentAuthor}
         />
       ))}
     </div>

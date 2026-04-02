@@ -10,6 +10,16 @@ function formatDate(dateStr) {
   })
 }
 
+function getAvatarColor(name) {
+  let hash = 0
+  for (const c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash)
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-rose-500',
+    'bg-amber-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500',
+  ]
+  return colors[Math.abs(hash) % colors.length]
+}
+
 const PencilIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -22,10 +32,12 @@ const TrashIcon = () => (
   </svg>
 )
 
-export default function MessageCard({ message, isEditing, onEdit, onSave, onCancel, onDelete, busy }) {
+export default function MessageCard({ message, isEditing, onEdit, onSave, onCancel, onDelete, busy, currentAuthor }) {
   const [editText, setEditText] = useState(message.text)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const editRef = useRef(null)
+
+  const isOwner = message.author === currentAuthor
 
   useEffect(() => {
     if (isEditing) {
@@ -79,49 +91,59 @@ export default function MessageCard({ message, isEditing, onEdit, onSave, onCanc
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 animate-fade-in">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${getAvatarColor(message.author)}`}>
+          {message.author.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Contenuto */}
         <div className="flex-1 min-w-0">
-          <p className="text-gray-800 break-words">{message.text}</p>
+          <p className="font-bold text-gray-800 text-sm">{message.author}</p>
+          <p className="text-gray-700 break-words">{message.text}</p>
           <p className="text-xs text-gray-400 mt-1">{formatDate(message.created_at)}</p>
         </div>
 
-        {confirmDelete ? (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-sm text-gray-600">Sei sicuro?</span>
-            <button
-              onClick={() => onDelete(message.id)}
-              disabled={busy}
-              className="px-2 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-            >
-              Sì
-            </button>
-            <button
-              onClick={() => setConfirmDelete(false)}
-              disabled={busy}
-              className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-            >
-              No
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-1 shrink-0">
-            <button
-              onClick={() => onEdit(message.id)}
-              disabled={busy}
-              className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg disabled:opacity-40 transition-colors"
-              title="Modifica"
-            >
-              <PencilIcon />
-            </button>
-            <button
-              onClick={() => setConfirmDelete(true)}
-              disabled={busy}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40 transition-colors"
-              title="Elimina"
-            >
-              <TrashIcon />
-            </button>
-          </div>
+        {/* Azioni (solo per il proprietario) */}
+        {isOwner && (
+          confirmDelete ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm text-gray-600">Sei sicuro?</span>
+              <button
+                onClick={() => onDelete(message.id)}
+                disabled={busy}
+                className="px-2 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                Sì
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={busy}
+                className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-1 shrink-0">
+              <button
+                onClick={() => onEdit(message.id)}
+                disabled={busy}
+                className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg disabled:opacity-40 transition-colors"
+                title="Modifica"
+              >
+                <PencilIcon />
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={busy}
+                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40 transition-colors"
+                title="Elimina"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          )
         )}
       </div>
     </div>
